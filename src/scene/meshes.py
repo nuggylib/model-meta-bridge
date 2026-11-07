@@ -90,6 +90,14 @@ def uv_report(target):
     }
 
 
+def modifier_report(target):
+    name = target["mesh"]
+    obj = _mesh_object(name)
+    if obj is None:
+        return {"mesh": name, "error": "no mesh"}
+    return {"mesh": name, "modifiers": [modifier.type for modifier in obj.modifiers]}
+
+
 def _uv_coords(layer):
     coords = array("f", [0]) * (2 * len(layer.uv))
     layer.uv.foreach_get("vector", coords)

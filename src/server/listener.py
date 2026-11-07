@@ -37,11 +37,21 @@ def _uvs_page(request):
     return "mesh_uvs", len(targets), lambda i: meshes.uv_report(targets[i])
 
 
+def _modifiers_page(request):
+    targets = request["meshes"]
+    return (
+        "mesh_modifiers",
+        len(targets),
+        lambda i: meshes.modifier_report(targets[i]),
+    )
+
+
 _PAGED = {
     "get_meshes": (None, _meshes_page),
     "get_mesh_weights": (protocol.weight_targets_problem, _weights_page),
     "get_mesh_textures": (protocol.texture_targets_problem, _textures_page),
-    "get_mesh_uvs": (protocol.uv_targets_problem, _uvs_page),
+    "get_mesh_uvs": (protocol.mesh_targets_problem, _uvs_page),
+    "get_mesh_modifiers": (protocol.mesh_targets_problem, _modifiers_page),
 }
 
 
