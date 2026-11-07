@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "model_meta_bridge"
-version = "0.3.0"
+version = "0.4.0"
 name = "Model Meta Bridge"
 tagline = "Streams the open Blender file to the Model Meta spec checker"
 maintainer = "Armando Vasquez <mando@mcnuggies.dev>"
