@@ -3,6 +3,7 @@ from typing import ClassVar
 
 import bpy
 
+from ..addon import manifest
 from ..scene import armatures, blend_file, changes, meshes
 from . import pages, protocol
 
@@ -142,6 +143,10 @@ def _get_filepath(client, _request):
     client.outbox += protocol.success({"filepath": blend_file.blend_filepath()})
 
 
+def _get_version(client, _request):
+    client.outbox += protocol.success({"version": manifest.VERSION})
+
+
 def _subscribe(client, request):
     client.subscriptions[request["type"]] = _Subscription(blend_file.blend_filepath())
 
@@ -159,6 +164,7 @@ def _queue(client, request):
 
 _HANDLERS = {
     "get_filepath": _get_filepath,
+    "get_version": _get_version,
     **{kind: _subscribe for kind in _SUBSCRIPTIONS},
     **{kind: _queue for kind in _PAGED},
 }

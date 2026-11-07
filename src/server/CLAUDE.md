@@ -19,7 +19,8 @@ Serves the protocol in `src/CLAUDE.md` over TCP, without threads.
 Accept new clients, read complete lines, handle a save/load if `scene.changes` saw one, answer
 pending clients, write what each socket will take, drop closed ones.
 
-- `get_filepath` is answered as soon as its line is read, so it never waits behind a subscription.
+- `get_filepath` and `get_version` are answered as soon as their line is read, so they never wait
+  behind a subscription.
 - Each client holds one `_Subscription` per subscribe type: the file it subscribed on, `pending`,
   `busy_sent` and `last_sent`. Subscribing again replaces it, so the next answer is always sent.
 - On a save/load, a subscription still on the file it subscribed on is marked pending. Ones on a

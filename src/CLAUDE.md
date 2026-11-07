@@ -7,6 +7,7 @@ else Spotlight (newest copy), else `blender` on `PATH`, and checks `blender_vers
 - `blender_manifest.toml`: extension metadata. Its `[build]` table keeps every `CLAUDE.md` out of
   the built zip.
 - `__init__.py`: `register()` / `unregister()`, called when the add-on is enabled / disabled.
+- `addon/`: facts about the add-on itself, such as its version.
 - `scene/`: the read-only armature, mesh and file path queries, and the save/load dirty flag and
   revision.
 - `server/`: the TCP listener and protocol messages. Not started in background mode.
@@ -25,6 +26,9 @@ else Spotlight (newest copy), else `blender` on `PATH`, and checks `blender_vers
 - `{"protocol":1,"type":"get_filepath"}`: answered once with
   `{"protocol":1,"status":"success","result":{"filepath":"..."}}`, the open `.blend` file's absolute
   path, or `null` if it was never saved. Send it before subscribing to confirm the right file is open.
+- `{"protocol":1,"type":"get_version"}`: answered once with
+  `{"protocol":1,"status":"success","result":{"version":"0.3.0"}}`, the installed add-on's `version`
+  from `blender_manifest.toml`.
 - `{"protocol":1,"type":"subscribe_armatures"}`: answered with
   `{"protocol":1,"status":"success","result":{"armatures":[...]}}` on subscribe and after a save/load
   that changes the list from the last one sent on that connection.
