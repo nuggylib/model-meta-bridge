@@ -84,3 +84,6 @@ All mesh data is the authored mesh (`obj.data`), never the modifier-evaluated on
 
   A missing mesh is `{"mesh","error":"no mesh"}`. A mesh in edit mode (e.g. the UV Editing workspace) is
   `{"mesh","error":"in edit mode"}`: Blender hides its UVs until it leaves edit mode.
+- `get_mesh_modifiers` with `"meshes":[{"mesh":"..."}]` → key `mesh_modifiers`, one item per entry,
+  in order: `{"mesh","modifiers":["ARMATURE","MIRROR",...]}`, each modifier's Blender type in stack
+  order, repeats included (`[]` if it has none). A missing mesh is `{"mesh","error":"no mesh"}`.

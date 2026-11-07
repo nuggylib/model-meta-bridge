@@ -66,7 +66,7 @@ def texture_targets_problem(request):
     return _targets_problem(request, valid, "`mesh` and `maps`")
 
 
-def uv_targets_problem(request):
+def mesh_targets_problem(request):
     return _targets_problem(
         request, lambda target: isinstance(target.get("mesh"), str), "`mesh`"
     )
