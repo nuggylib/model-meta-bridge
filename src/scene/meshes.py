@@ -1,4 +1,5 @@
 import functools
+import itertools
 import math
 import os
 import struct
@@ -6,6 +7,7 @@ from array import array
 
 import bmesh
 import bpy
+import numpy as np
 
 
 def mesh_objects():
@@ -96,6 +98,111 @@ def modifier_report(target):
     if obj is None:
         return {"mesh": name, "error": "no mesh"}
     return {"mesh": name, "modifiers": [modifier.type for modifier in obj.modifiers]}
+
+
+def duplicate_groups():
+    """Return every set of two or more scene meshes that share one shape.
+
+    Each mesh is keyed by `_shape_key`, and meshes with equal keys form a group. A mesh
+    with no faces is skipped: it has no shape to share. Names within a group are sorted
+    (`mesh_objects` already yields them in name order), and groups are sorted by their
+    first name, so the list and every page of it are stable for a given file.
+    """
+    groups = {}
+    for obj in mesh_objects():
+        if obj.data.polygons:
+            groups.setdefault(_shape_key(obj.data), []).append(obj.name)
+    return sorted(names for names in groups.values() if len(names) > 1)
+
+
+def _shape_key(mesh):
+    """Return a key that is equal for two meshes exactly when they have the same shape.
+
+    The key cancels orientation, position and vertex order, then adds the faces:
+
+    1. Orientation: try all 48 axis swaps and sign flips, every way to turn or mirror
+       in 90-degree steps. Each one only moves or negates coordinates, so none rounds.
+    2. Position: offset every vertex from the bounding-box minimum. That corner doesn't
+       depend on vertex order, and the subtraction is exact in float64.
+    3. Vertex order: sort the vertices by position (X, then Y, then Z). The sorted
+       coordinates' bytes are that orientation's layout.
+    4. Pick the least layout. Same-shape meshes share all 48 layouts, so they pick the
+       same one whichever way each faced. A symmetric shape can reach that layout from
+       several orientations, so each layout keeps every vertex order that produced it.
+    5. Faces: renumber each face's vertices by their sorted rank, rotate each face to
+       start at its lowest rank, sort the faces, and keep the lesser of both windings.
+       Over tied vertex orders, keep the least result.
+
+    Exact, with no tolerance: rotations other than 90-degree steps, and moves that
+    round, change the stored floats and so the shape. Coincident vertices tie in the
+    sort and fall back to vertex order, so a mesh that has them can miss.
+    """
+    coords = np.empty(3 * len(mesh.vertices), dtype=np.float32)
+    mesh.vertices.foreach_get("co", coords)
+    points = coords.reshape(-1, 3).astype(np.float64)
+    orders_by_layout = {}
+    for axes in itertools.permutations(range(3)):
+        for signs in itertools.product((1.0, -1.0), repeat=3):
+            turned = points[:, list(axes)] * signs
+            # float32 differences are exact in float64, so this drops position exactly.
+            turned -= turned.min(axis=0)
+            order = np.lexsort(turned.T[::-1])
+            orders_by_layout.setdefault(turned[order].tobytes(), []).append(order)
+    layout = min(orders_by_layout)
+    faces = _faces(mesh)
+    return layout, min(_faces_key(faces, order) for order in orders_by_layout[layout])
+
+
+def _faces(mesh):
+    """Return each face as its vertex indices, in winding order.
+
+    Blender stores faces as runs of corners ("loops"): face `i` owns the corners from
+    `loop_start[i]` for `loop_total[i]` entries, and each corner names one vertex. The
+    three arrays are read with `foreach_get` and sliced into one sequence per face.
+    """
+    polygons = mesh.polygons
+    starts = array("i", [0]) * len(polygons)
+    totals = array("i", [0]) * len(polygons)
+    corners = array("i", [0]) * len(mesh.loops)
+    polygons.foreach_get("loop_start", starts)
+    polygons.foreach_get("loop_total", totals)
+    mesh.loops.foreach_get("vertex_index", corners)
+    return [corners[s : s + t] for s, t in zip(starts, totals, strict=True)]
+
+
+def _faces_key(faces, order):
+    """Return the faces described by vertex position instead of vertex index.
+
+    `order` is a vertex order from `_shape_key`: `order[k]` is the original index of
+    the vertex in sorted slot `k`. Inverting it gives each vertex's rank, and every
+    face is renumbered to those ranks, so two meshes with the same vertices in a
+    different order describe their faces with the same numbers.
+
+    What's left is how the faces are written down:
+    - A face can start at any of its corners: `(5, 2, 9)` and `(2, 9, 5)` are one face.
+      `_rotated_to_min` starts each at its lowest rank.
+    - Face order is arbitrary, so the faces are sorted.
+    - A mirrored copy may wind every face the other way. Both windings are built and
+      the lesser is kept, so either winding gives the same result.
+    """
+    rank = np.empty(len(order), dtype=np.int64)
+    rank[order] = np.arange(len(order))
+    rank = rank.tolist()
+    ranked = [tuple(rank[v] for v in face) for face in faces]
+    # A reflected copy may have its winding reversed.
+    forward = sorted(_rotated_to_min(face) for face in ranked)
+    backward = sorted(_rotated_to_min(face[::-1]) for face in ranked)
+    return tuple(min(forward, backward))
+
+
+def _rotated_to_min(face):
+    """Return the face rotated to start at its lowest vertex, keeping its winding.
+
+    `(5, 2, 9)` becomes `(2, 9, 5)`. A face's vertices are distinct, so there is one
+    lowest vertex and the result is unique.
+    """
+    i = face.index(min(face))
+    return face[i:] + face[:i]
 
 
 def _uv_coords(layer):
