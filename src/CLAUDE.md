@@ -87,3 +87,9 @@ All mesh data is the authored mesh (`obj.data`), never the modifier-evaluated on
 - `get_mesh_modifiers` with `"meshes":[{"mesh":"..."}]` → key `mesh_modifiers`, one item per entry,
   in order: `{"mesh","modifiers":["ARMATURE","MIRROR",...]}`, each modifier's Blender type in stack
   order, repeats included (`[]` if it has none). A missing mesh is `{"mesh","error":"no mesh"}`.
+- `get_duplicate_meshes` → key `duplicate_meshes`: one item per set of two or more scene meshes
+  with the same shape, as `{"duplicates":["arm_top.FL","arm_top.FR",...]}`, names sorted, items
+  sorted by their first name. No member is the original. Meshes with no faces are left out.
+  - Same shape: the same vertex count and faces (by vertex index, either winding), with vertex
+    positions equal exactly after any move, axis swap or axis flip. Object transforms, UVs and
+    materials are ignored.

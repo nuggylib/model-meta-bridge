@@ -1,4 +1,5 @@
 import functools
+import itertools
 import math
 import os
 import struct
@@ -6,6 +7,7 @@ from array import array
 
 import bmesh
 import bpy
+import numpy as np
 
 
 def mesh_objects():
@@ -96,6 +98,53 @@ def modifier_report(target):
     if obj is None:
         return {"mesh": name, "error": "no mesh"}
     return {"mesh": name, "modifiers": [modifier.type for modifier in obj.modifiers]}
+
+
+def duplicate_groups():
+    """Each list is two or more scene mesh names sharing one shape, sorted by name."""
+    groups = {}
+    for obj in mesh_objects():
+        if obj.data.polygons:
+            groups.setdefault(_shape_key(obj.data), []).append(obj.name)
+    return sorted(names for names in groups.values() if len(names) > 1)
+
+
+def _shape_key(mesh):
+    return _faces_key(mesh), _positions_key(mesh)
+
+
+def _faces_key(mesh):
+    polygons = mesh.polygons
+    starts = array("i", [0]) * len(polygons)
+    totals = array("i", [0]) * len(polygons)
+    corners = array("i", [0]) * len(mesh.loops)
+    polygons.foreach_get("loop_start", starts)
+    polygons.foreach_get("loop_total", totals)
+    mesh.loops.foreach_get("vertex_index", corners)
+    faces = [tuple(corners[s : s + t]) for s, t in zip(starts, totals, strict=True)]
+    # A reflected copy has its winding reversed.
+    forward = sorted(_rotated_to_min(face) for face in faces)
+    reversed_ = sorted(_rotated_to_min(face[::-1]) for face in faces)
+    return len(mesh.vertices), tuple(min(forward, reversed_))
+
+
+def _rotated_to_min(face):
+    i = face.index(min(face))
+    return face[i:] + face[:i]
+
+
+def _positions_key(mesh):
+    coords = np.empty(3 * len(mesh.vertices), dtype=np.float32)
+    mesh.vertices.foreach_get("co", coords)
+    # float32 differences are exact in float64, so the offset from vertex 0 drops position.
+    offsets = coords.reshape(-1, 3).astype(np.float64)
+    offsets -= offsets[0]
+    # Adding 0.0 turns a negated -0.0 into 0.0, so equal shapes give equal bytes.
+    return min(
+        (offsets[:, list(axes)] * signs + 0.0).tobytes()
+        for axes in itertools.permutations(range(3))
+        for signs in itertools.product((1.0, -1.0), repeat=3)
+    )
 
 
 def _uv_coords(layer):

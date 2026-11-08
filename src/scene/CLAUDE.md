@@ -13,7 +13,7 @@ Reads Blender's scene and tracks when it may have changed. Read-only: nothing he
   `mesh_objects()` lists scene `MESH` objects sorted by name; `summary(obj)`,
   `weight_report(target)`, `texture_report(target)`, `uv_report(target)` and
   `modifier_report(target)` build one item each. Take a target that has already been validated by
-  `server.protocol`.
+  `server.protocol`. `duplicate_groups()` returns every group at once; it reads all scene meshes.
   - Always reads the authored mesh (`obj.data`), never an evaluated one: the spec's `modifiers`
     section is what governs modifiers.
   - `weight_report` loops over every vertex in Python (`foreach_get` can't read deform weights), so
@@ -29,3 +29,7 @@ Reads Blender's scene and tracks when it may have changed. Read-only: nothing he
     unlinked nodes. "Saved" means `source == "FILE"` and the resolved path is a file on disk, so an
     unsaved bake (a `GENERATED` image) fails. It reads each material's top-level node tree only,
     not node groups.
+  - `duplicate_groups` keys each mesh by its faces (each rotated to start at its lowest vertex,
+    sorted, the lesser of both windings) and its vertex offsets from vertex 0 in float64 (exact
+    for float32 input), taking the least bytes over all 48 axis swaps and flips. Equal keys mean
+    the same shape, with no tolerance. Uses Blender's bundled `numpy`.
