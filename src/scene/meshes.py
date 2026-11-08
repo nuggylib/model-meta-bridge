@@ -110,10 +110,24 @@ def duplicate_groups():
 
 
 def _shape_key(mesh):
-    return _faces_key(mesh), _positions_key(mesh)
+    """Vertex order plays no part: vertices are ranked by position."""
+    coords = np.empty(3 * len(mesh.vertices), dtype=np.float32)
+    mesh.vertices.foreach_get("co", coords)
+    points = coords.reshape(-1, 3).astype(np.float64)
+    orders_by_layout = {}
+    for axes in itertools.permutations(range(3)):
+        for signs in itertools.product((1.0, -1.0), repeat=3):
+            turned = points[:, list(axes)] * signs
+            # float32 differences are exact in float64, so this drops position exactly.
+            turned -= turned.min(axis=0)
+            order = np.lexsort(turned.T[::-1])
+            orders_by_layout.setdefault(turned[order].tobytes(), []).append(order)
+    layout = min(orders_by_layout)
+    faces = _faces(mesh)
+    return layout, min(_faces_key(faces, order) for order in orders_by_layout[layout])
 
 
-def _faces_key(mesh):
+def _faces(mesh):
     polygons = mesh.polygons
     starts = array("i", [0]) * len(polygons)
     totals = array("i", [0]) * len(polygons)
@@ -121,30 +135,23 @@ def _faces_key(mesh):
     polygons.foreach_get("loop_start", starts)
     polygons.foreach_get("loop_total", totals)
     mesh.loops.foreach_get("vertex_index", corners)
-    faces = [tuple(corners[s : s + t]) for s, t in zip(starts, totals, strict=True)]
-    # A reflected copy has its winding reversed.
-    forward = sorted(_rotated_to_min(face) for face in faces)
-    reversed_ = sorted(_rotated_to_min(face[::-1]) for face in faces)
-    return len(mesh.vertices), tuple(min(forward, reversed_))
+    return [corners[s : s + t] for s, t in zip(starts, totals, strict=True)]
+
+
+def _faces_key(faces, order):
+    rank = np.empty(len(order), dtype=np.int64)
+    rank[order] = np.arange(len(order))
+    rank = rank.tolist()
+    ranked = [tuple(rank[v] for v in face) for face in faces]
+    # A reflected copy may have its winding reversed.
+    forward = sorted(_rotated_to_min(face) for face in ranked)
+    backward = sorted(_rotated_to_min(face[::-1]) for face in ranked)
+    return tuple(min(forward, backward))
 
 
 def _rotated_to_min(face):
     i = face.index(min(face))
     return face[i:] + face[:i]
-
-
-def _positions_key(mesh):
-    coords = np.empty(3 * len(mesh.vertices), dtype=np.float32)
-    mesh.vertices.foreach_get("co", coords)
-    # float32 differences are exact in float64, so the offset from vertex 0 drops position.
-    offsets = coords.reshape(-1, 3).astype(np.float64)
-    offsets -= offsets[0]
-    # Adding 0.0 turns a negated -0.0 into 0.0, so equal shapes give equal bytes.
-    return min(
-        (offsets[:, list(axes)] * signs + 0.0).tobytes()
-        for axes in itertools.permutations(range(3))
-        for signs in itertools.product((1.0, -1.0), repeat=3)
-    )
 
 
 def _uv_coords(layer):

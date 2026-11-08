@@ -29,7 +29,9 @@ Reads Blender's scene and tracks when it may have changed. Read-only: nothing he
     unlinked nodes. "Saved" means `source == "FILE"` and the resolved path is a file on disk, so an
     unsaved bake (a `GENERATED` image) fails. It reads each material's top-level node tree only,
     not node groups.
-  - `duplicate_groups` keys each mesh by its faces (each rotated to start at its lowest vertex,
-    sorted, the lesser of both windings) and its vertex offsets from vertex 0 in float64 (exact
-    for float32 input), taking the least bytes over all 48 axis swaps and flips. Equal keys mean
-    the same shape, with no tolerance. Uses Blender's bundled `numpy`.
+  - `duplicate_groups` keys each mesh by shape alone. For each of the 48 axis swaps and flips it
+    takes the vertices' offsets from their bounding-box minimum in float64 (exact for float32
+    input) and sorts them by position. The least of those layouts is the key, with the faces
+    renumbered to it (each rotated to start at its lowest vertex, sorted, the lesser of both
+    windings). Equal keys mean the same shape, with no tolerance. Ties between coincident
+    vertices fall back to vertex order, so such meshes can miss. Uses Blender's bundled `numpy`.
