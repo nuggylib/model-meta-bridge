@@ -63,11 +63,13 @@ All mesh data is the authored mesh (`obj.data`), never the modifier-evaluated on
   group, `at_weight` those whose weight equals `weight` exactly (compared as float32, Blender's storage).
   A mesh passes when both equal `vertices`. Other groups a vertex belongs to are ignored. A missing mesh or group is
   `{"mesh","vertex_group","error":"no mesh"|"no vertex group"}`.
-- `get_mesh_textures` with `"meshes":[{"mesh":"...","maps":["albedo","orm",...]}]` → key
-  `mesh_textures`, one item per entry, in order: `{"mesh","maps":{"albedo":<bool>,...}}`. A map is
-  `true` when an Image Texture node in any of the mesh's slot materials holds an image saved to
-  disk whose filename ends with `<mesh>_<map>.png`, e.g. `wheel_hub.front.L_albedo.png`. Wiring is
-  not checked. A missing mesh is `{"mesh","error":"no mesh"}`.
+- `get_mesh_textures` with `"meshes":[{"mesh":"..."}]` → key `mesh_textures`, one item per entry,
+  in order: `{"mesh","images":[{"name","filepath"},...]}`, every image held by an Image Texture node
+  in the mesh's slot materials, once each, in slot then node order (`[]` if none). `name` is the
+  Blender image name; `filepath` is its normalized absolute path, or `null` if it has none (e.g. an
+  unsaved bake). A `//` path stays relative while the `.blend` is unsaved. The path is not checked
+  to exist. Wiring is not checked. A missing mesh is
+  `{"mesh","error":"no mesh"}`.
 - `get_mesh_uvs` with `"meshes":[{"mesh":"..."}]` → key `mesh_uvs`, one item per entry, in order:
   `{"mesh","faces","has_default_uv_map","uv_maps":[{"name","zero_area"},...]}`, one `uv_maps` entry
   per UV map in Blender's order (`[]` if the mesh has none).

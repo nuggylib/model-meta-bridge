@@ -58,7 +58,7 @@ def _duplicates_page(_request):
 _PAGED = {
     "get_meshes": (None, _meshes_page),
     "get_mesh_weights": (protocol.weight_targets_problem, _weights_page),
-    "get_mesh_textures": (protocol.texture_targets_problem, _textures_page),
+    "get_mesh_textures": (protocol.mesh_targets_problem, _textures_page),
     "get_mesh_uvs": (protocol.mesh_targets_problem, _uvs_page),
     "get_mesh_modifiers": (protocol.mesh_targets_problem, _modifiers_page),
     "get_duplicate_meshes": (None, _duplicates_page),

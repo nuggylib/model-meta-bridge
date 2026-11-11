@@ -25,10 +25,9 @@ Reads Blender's scene and tracks when it may have changed. Read-only: nothing he
     Blender's own `bmesh.ops.create_*` (in a free-standing BMesh) so they track the running
     version. The torus has no `bmesh` builder, so `_torus_layout` mirrors `add_uvs()` in
     `bl_operators/add_mesh_torus.py`. Coordinates are matched exactly, as float32.
-  - `texture_report` checks a map's presence, not how it's wired: baked images usually sit in
-    unlinked nodes. "Saved" means `source == "FILE"` and the resolved path is a file on disk, so an
-    unsaved bake (a `GENERATED` image) fails. It reads each material's top-level node tree only,
-    not node groups.
+  - `texture_report` lists Image Texture node images whether or not they're wired: baked images
+    usually sit in unlinked nodes. It reads each material's top-level node tree only, not node
+    groups.
   - `duplicate_groups` keys each mesh by shape alone. For each of the 48 axis swaps and flips it
     takes the vertices' offsets from their bounding-box minimum in float64 (exact for float32
     input) and sorts them by position. The least of those layouts is the key, with the faces

@@ -54,17 +54,16 @@ def weight_report(target):
 
 
 def texture_report(target):
-    name, maps = target["mesh"], target["maps"]
+    name = target["mesh"]
     obj = _mesh_object(name)
     if obj is None:
         return {"mesh": name, "error": "no mesh"}
-    files = _saved_image_files(obj)
     return {
         "mesh": name,
-        "maps": {
-            texture_map: any(f.endswith(f"{name}_{texture_map}.png") for f in files)
-            for texture_map in maps
-        },
+        "images": [
+            {"name": image.name, "filepath": _image_path(image)}
+            for image in _node_images(obj)
+        ],
     }
 
 
@@ -289,17 +288,19 @@ def _mesh_object(name):
     return obj if obj is not None and obj.type == "MESH" else None
 
 
-def _saved_image_files(obj):
-    files = set()
+def _node_images(obj):
+    images = {}
     for slot in obj.material_slots:
         material = slot.material
         if material is None or material.node_tree is None:
             continue
         for node in material.node_tree.nodes:
-            image = node.image if node.type == "TEX_IMAGE" else None
-            if image is None or image.source != "FILE":
-                continue
-            path = bpy.path.abspath(image.filepath, library=image.library)
-            if os.path.isfile(path):
-                files.add(os.path.basename(path))
-    return files
+            if node.type == "TEX_IMAGE" and node.image is not None:
+                images.setdefault(node.image.name, node.image)
+    return images.values()
+
+
+def _image_path(image):
+    if not image.filepath:
+        return None
+    return os.path.normpath(bpy.path.abspath(image.filepath, library=image.library))
