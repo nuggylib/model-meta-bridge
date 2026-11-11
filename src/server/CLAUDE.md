@@ -4,7 +4,7 @@ Serves the protocol in `src/CLAUDE.md` over TCP, without threads.
 
 - `protocol.py`: builds outgoing lines (`success(result)`, `error(message)`) and checks incoming
   ones (`parse_request(line, known_types)`, which returns the whole request dict so handlers can read
-  its parameters). `paging_problem`, `weight_targets_problem`, `texture_targets_problem` and `mesh_targets_problem`
+  its parameters). `paging_problem`, `weight_targets_problem` and `mesh_targets_problem`
   (entries that need only `mesh`) return a request's `invalid request: ...` message, or `None`. Pure JSON; no `bpy`, no sockets.
 - `pages.py`: `page(count, build, cursor)` fills one page from `build(i)` up to `PAGE_BYTES`. Pure.
 - `listener.py`: `start()` opens a non-blocking listening socket and registers `_tick` as a

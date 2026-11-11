@@ -54,18 +54,6 @@ def weight_targets_problem(request):
     return _targets_problem(request, valid, "`mesh`, `vertex_group` and `weight`")
 
 
-def texture_targets_problem(request):
-    def valid(target):
-        maps = target.get("maps")
-        return (
-            isinstance(target.get("mesh"), str)
-            and isinstance(maps, list)
-            and all(isinstance(name, str) for name in maps)
-        )
-
-    return _targets_problem(request, valid, "`mesh` and `maps`")
-
-
 def mesh_targets_problem(request):
     return _targets_problem(
         request, lambda target: isinstance(target.get("mesh"), str), "`mesh`"
