@@ -2,8 +2,9 @@
 
 Reads Blender's scene and tracks when it may have changed. Read-only: nothing here modifies `bpy` data.
 
-- `armatures.py`: `armature_names()` lists `ARMATURE` objects linked to the active scene
-  (`bpy.context.scene.objects`, not `bpy.data.objects`, so objects outside the scene are left out).
+- `armatures.py`: `armature_reports()` lists `ARMATURE` objects linked to the active scene
+  (`bpy.context.scene.objects`, not `bpy.data.objects`, so objects outside the scene are left out),
+  each with its bones from the armature data (`obj.data.bones`, the authored bones, not pose bones).
 - `blend_file.py`: `blend_filepath()` returns the open `.blend` file's absolute path
   (`bpy.data.filepath`), or `None` if it has never been saved.
 - `changes.py`: `save_post` / `load_post` handlers that set a dirty flag and bump a revision counter.

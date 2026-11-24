@@ -31,7 +31,9 @@ else Spotlight (newest copy), else `blender` on `PATH`, and checks `blender_vers
   from `blender_manifest.toml`.
 - `{"protocol":1,"type":"subscribe_armatures"}`: answered with
   `{"protocol":1,"status":"success","result":{"armatures":[...]}}` on subscribe and after a save/load
-  that changes the list from the last one sent on that connection.
+  that changes the list from the last one sent on that connection. Each armature is
+  `{"name","bones":[{"name","parent"},...]}` in scene order, bones in Blender's order (`[]` if it has
+  none). `parent` is the parent bone's name, or `null` for a root bone.
 - `{"protocol":1,"type":"subscribe_meshes"}`: answered with
   `{"protocol":1,"status":"success","result":{"meshes_revision":<n>}}` on subscribe and after every
   save/load. Pass `<n>` as `revision` to the paged requests below.
