@@ -12,7 +12,7 @@ PORT = 7417
 TICK_SECONDS = 0.1
 
 _SUBSCRIPTIONS = {
-    "subscribe_armatures": lambda: {"armatures": armatures.armature_names()},
+    "subscribe_armatures": lambda: {"armatures": armatures.armature_reports()},
     "subscribe_meshes": lambda: {"meshes_revision": changes.revision()},
 }
 
