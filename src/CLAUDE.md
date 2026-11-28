@@ -58,7 +58,8 @@ All mesh data is the authored mesh (`obj.data`), never the modifier-evaluated on
 `MESH` objects in the active scene, looked up by object name.
 
 - `get_meshes` → key `meshes`: every scene mesh, sorted by name, as
-  `{"name":"...","vertex_groups":[...],"material_slots":[...]}`. A slot with no material is `""`.
+  `{"name":"...","mesh_data":"...","vertex_groups":[...],"material_slots":[...]}`. `mesh_data` is
+  the name of the object's mesh datablock (`obj.data.name`). A slot with no material is `""`.
 - `get_mesh_weights` with `"meshes":[{"mesh":"...","vertex_group":"...","weight":<number>}]` →
   key `mesh_weights`, one item per entry, in order:
   `{"mesh","vertex_group","vertices","assigned","at_weight"}`. `assigned` counts vertices in the
