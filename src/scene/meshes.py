@@ -21,6 +21,7 @@ def mesh_objects():
 def summary(obj):
     return {
         "name": obj.name,
+        "mesh_data": obj.data.name,
         "vertex_groups": [group.name for group in obj.vertex_groups],
         "material_slots": [slot.name for slot in obj.material_slots],
     }
